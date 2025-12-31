@@ -1,33 +1,54 @@
-name: iOS Build
+name: Build Unsigned IPA
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Install Homebrew
-      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
     - name: Install XcodeGen
-      run: brew install xcodegen
+      run: |
+        brew install xcodegen
 
     - name: Generate Xcode project
-      run: xcodegen generate
+      run: |
+        xcodegen generate --spec project.yaml
 
-    - name: Resolve Swift Packages
-      run: xcodebuild -resolvePackageDependencies -project VentApp.xcodeproj
+    - name: Resolve Swift Package Dependencies
+      run: |
+        xcodebuild -resolvePackageDependencies -project VentApp.xcodeproj
 
-    - name: Build App
-      run: xcodebuild -scheme VentApp -project VentApp.xcodeproj -sdk iphoneos -configuration Release build
+    - name: List available schemes
+      run: |
+        xcodebuild -list -project VentApp.xcodeproj
 
-    - name: Archive
-      run: xcodebuild -scheme VentApp -project VentApp.xcodeproj -archivePath $PWD/build/VentApp.xcarchive archive
+    - name: Archive project unsigned
+      run: |
+        xcodebuild archive \
+          -project VentApp.xcodeproj \
+          -scheme VentApp \
+          -archivePath unsigned.xcarchive \
+          -configuration Release \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
 
-    - name: Export IPA
-      run: xcodebuild -exportArchive -archivePath $PWD/build/VentApp.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $PWD/build
+    - name: Package unsigned .ipa
+      run: |
+        mkdir -p Payload
+        cp -r unsigned.xcarchive/Products/Applications/VentApp.app Payload/
+        zip -r VentApp.ipa Payload
+        mv VentApp.ipa $GITHUB_WORKSPACE/VentApp.ipa
+
+    - name: Upload IPA as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: VentApp-unsigned
+        path: VentApp.ipa
