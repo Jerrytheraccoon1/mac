@@ -1,0 +1,14 @@
+name: VentApp
+options:
+  bundleIdPrefix: com.yourname
+configs:
+  Debug: debug
+  Release: release
+targets:
+  VentApp:
+    type: application
+    platform: iOS
+    deploymentTarget: '16.0'
+    sources: [VentApp]
+    settings:
+      INFO_PLIST_FILE: VentApp/Info.plist
