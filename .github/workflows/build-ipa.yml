@@ -19,7 +19,7 @@ jobs:
 
     - name: Generate Xcode project
       run: |
-        xcodegen generate --spec project.yaml
+        xcodegen generate --spec project.yml
 
     - name: Resolve Swift Package Dependencies
       run: |
@@ -48,7 +48,7 @@ jobs:
         mv VentApp.ipa $GITHUB_WORKSPACE/VentApp.ipa
 
     - name: Upload IPA as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: VentApp-unsigned
         path: VentApp.ipa
